@@ -55,21 +55,58 @@ AHORA, PROCESA LA SIGUIENTE NOTICIA BAJO ESTAS REGLAS DE ESTILO:
 
 def get_latest_news():
     """
-    Obtiene las últimas noticias de una API.
-    Por ahora, devuelve una noticia de prueba para testear.
+    Obtiene la noticia más reciente de NewsAPI que no hayamos procesado antes.
     """
-    print("1. Obteniendo noticias (usando datos de prueba)...")
-    # TODO: Cuando estés listo, reemplaza esto con una llamada real a una News API
-    # Ejemplo: url = f"https://newsapi.org/v2/top-headlines?country=us&apiKey={NEWS_API_KEY}"
-    # response = requests.get(url)
-    # articles = response.json()['articles']
-    # return articles[0] 
+    print("1. Obteniendo noticias reales de NewsAPI...")
+    if not NEWS_API_KEY:
+        print("Error: La clave de API de noticias (NEWS_API_KEY) no está configurada.")
+        return None
+
+    # --- Lógica para no repetir noticias ---
+    processed_urls_log = 'processed_urls.log'
+    try:
+        with open(processed_urls_log, 'r', encoding='utf-8') as f:
+            processed_urls = set(f.read().splitlines())
+    except FileNotFoundError:
+        processed_urls = set()
+
+    # --- Llamada a la API de Noticias ---
+    # Buscamos noticias en español sobre temas relevantes
+    search_query = "conflicto OR guerra OR crisis OR alerta internacional"
+    url = (f"https://newsapi.org/v2/everything?q={search_query}"
+           f"&language=es&sortBy=publishedAt&pageSize=10&apiKey={NEWS_API_KEY}")
     
-    return {
-        "title": "La Guardia Revolucionaria de Irán anunció el lanzamiento de misiles hipersónicos contra Israel",
-        "content": "En el evento de presentación, un cartel gigante fue instalado en Teherán con un mensaje escrito en hebreo: “400 segundos hasta Tel Aviv”. Según la información difundida por medios estatales, los misiles lanzados durante esta oleada tienen un alcance operativo estimado de 1.400 kilómetros y son capaces de transportar cargas útiles de hasta 450 kilogramos. El IRGC calificó a los Fattah-1 como “poderosos y altamente maniobrables”, y aseguró que estos proyectiles “perforaron el escudo antimisiles” israelí...",
-        "url": "https://www.infobae.com/ejemplo-de-noticia-final"
-    }
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        articles = response.json().get('articles', [])
+
+        if not articles:
+            print("No se encontraron artículos para la búsqueda.")
+            return None
+
+        # Encontrar el primer artículo que no haya sido procesado
+        for article in articles:
+            if article.get('url') and article['url'] not in processed_urls:
+                print(f"Nueva noticia encontrada: {article['title']}")
+                
+                # Guardar la URL para no volver a procesarla
+                with open(processed_urls_log, 'a', encoding='utf-8') as f:
+                    f.write(article['url'] + '\n')
+                
+                # Devolvemos el artículo para que sea procesado
+                return {
+                    "title": article['title'],
+                    "content": article['description'] or article.get('content', '') or "Contenido no disponible.", # Usar descripción o contenido
+                    "url": article['url']
+                }
+        
+        print("No hay noticias nuevas desde la última ejecución.")
+        return None
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error obteniendo noticias de NewsAPI: {e}")
+        return None
 
 def process_with_llm(article_content):
     """
