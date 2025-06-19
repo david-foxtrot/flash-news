@@ -1,0 +1,107 @@
+---
+// --- Code Fence (JavaScript) ---
+import newsData from '../../news.json';
+---
+<html lang="es">
+<head>
+  <meta charset="UTF-8" /> <meta name="viewport" content="width=device-width" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <title>Flash News Feed</title>
+</head>
+<body>
+  <main>
+    <h1>Flash News Feed</h1>
+    <div class="feed-container">
+      {newsData.map(news => (
+        <a href={news.source_url} target="_blank" rel="noopener noreferrer" class="news-card">
+          <div class="card-header">
+            <span class="flags">{news.flags}</span>
+            <span class="keyword">{news.keyword}</span>
+          </div>
+          <p class="sentence">{news.sentence1}</p>
+          <p class="sentence">{news.sentence2}</p>
+        </a >
+      ))}
+    </div>
+  </main>
+</body>
+</html>
+
+<style>
+  /* ... (Todos los estilos que ya teníamos se quedan igual) ... */
+  body {
+    background-color: #121212;
+    color: #E0E0E0;
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 1rem;
+  }
+
+  main {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    text-align: center;
+    color: #FFFFFF;
+    margin-bottom: 2rem;
+  }
+
+  .feed-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .news-card {
+    background-color: #1E1E1E;
+    border-radius: 8px;
+    padding: 1.25rem;
+    border: 1px solid #2d2d2d;
+    text-decoration: none;
+    color: #E0E0E0;
+    transition: background-color 0.2s ease-in-out;
+  }
+
+  .news-card:hover {
+    background-color: #2a2a2a;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .flags {
+    font-size: 1.5rem;
+  }
+
+  .keyword {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #BB86FC;
+    background-color: rgba(187, 134, 252, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  .sentence {
+    margin: 0.5rem 0;
+    line-height: 1.6;
+  }
+
+  @media (min-width: 768px) {
+    body {
+      padding: 2rem;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+    }
+  }
+</style>
