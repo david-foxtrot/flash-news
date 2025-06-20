@@ -1,27 +1,28 @@
 ---
 // --- Code Fence (JavaScript) ---
 
-// 1. Usamos Astro.glob para importar el contenido de TODOS los archivos .json
-// que están dentro de nuestra carpeta de noticias.
-const allNews = await Astro.glob('../../content/news/*.json');
+// 1. Usamos el método moderno 'import.meta.glob' para encontrar todos los archivos.
+// Esta es la forma recomendada y más robusta en Astro.
+const newsImports = import.meta.glob('../../content/news/*.json');
 
-// --- PASO DE DEPURACIÓN ---
-// Esto imprimirá mensajes en el log de construcción de Cloudflare para que podamos ver qué está pasando.
-console.log(`[DEBUG] Archivos de noticias encontrados por Astro.glob(): ${allNews.length}`);
+// 2. 'import.meta.glob' devuelve un objeto de funciones que debemos ejecutar
+// para obtener el contenido real de cada archivo. Usamos Promise.all para hacerlo.
+const newsPromises = Object.values(newsImports).map(importer => importer());
+const allNewsObjects = await Promise.all(newsPromises);
 
+// 3. El contenido real de cada JSON está en la propiedad 'default' de lo que importamos.
+// Creamos una lista limpia con solo el contenido que nos interesa.
+const allNews = allNewsObjects.map(item => item.default || item);
+
+// --- PASO DE DEPURACIÓN (Opcional, puedes borrarlo después) ---
+console.log(`[DEBUG] Archivos de noticias procesados: ${allNews.length}`);
 if (allNews.length > 0) {
-  // Imprimimos la estructura del primer objeto para asegurarnos de que es correcta
-  console.log('[DEBUG] Estructura de la primera noticia:', JSON.stringify(allNews[0], null, 2));
-} else {
-  console.log('[DEBUG] No se encontró ninguna noticia. La carpeta src/content/news/ podría estar vacía o la ruta de glob es incorrecta.');
+  console.log('[DEBUG] Estructura de la primera noticia:', JSON.stringify(allNews[0]));
 }
-// ------------------------
+// -------------------------------------------------------------
 
-
-// 2. Ordenamos las noticias. El 'id' (que es el timestamp) es perfecto para esto.
-// b.id.localeCompare(a.id) ordena del más nuevo al más viejo.
+// 4. Ordenamos las noticias del más nuevo al más viejo usando su 'id'.
 const sortedNews = allNews.sort((a, b) => {
-  // Verificación para asegurarse de que 'id' existe en ambos objetos
   if (a.id && b.id) {
     return b.id.localeCompare(a.id);
   }
@@ -64,59 +65,25 @@ const sortedNews = allNews.sort((a, b) => {
     margin: 0;
     padding: 1rem;
   }
-  main {
-    max-width: 680px;
-    margin: 0 auto;
-  }
-  h1 {
-    text-align: center;
-    color: #FFFFFF;
-    margin-bottom: 2rem;
-  }
-  .feed-container {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
+  main { max-width: 680px; margin: 0 auto; }
+  h1 { text-align: center; color: #FFFFFF; margin-bottom: 2rem; }
+  .feed-container { display: flex; flex-direction: column; gap: 1rem; }
   .news-card {
-    background-color: #1E1E1E;
-    border-radius: 8px;
-    padding: 1.25rem;
-    border: 1px solid #2d2d2d;
-    text-decoration: none;
-    color: #E0E0E0;
+    background-color: #1E1E1E; border-radius: 8px; padding: 1.25rem;
+    border: 1px solid #2d2d2d; text-decoration: none; color: #E0E0E0;
     transition: background-color 0.2s ease-in-out;
   }
-  .news-card:hover {
-    background-color: #2a2a2a;
-  }
-  .card-header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-  }
-  .flags {
-    font-size: 1.5rem;
-  }
+  .news-card:hover { background-color: #2a2a2a; }
+  .card-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+  .flags { font-size: 1.5rem; }
   .keyword {
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: #BB86FC;
-    background-color: rgba(187, 134, 252, 0.1);
-    padding: 0.25rem 0.5rem;
+    font-size: 0.9rem; font-weight: 700; color: #BB86FC;
+    background-color: rgba(187, 134, 252, 0.1); padding: 0.25rem 0.5rem;
     border-radius: 4px;
   }
-  .sentence {
-    margin: 0.5rem 0;
-    line-height: 1.6;
-  }
+  .sentence { margin: 0.5rem 0; line-height: 1.6; }
   @media (min-width: 768px) {
-    body {
-      padding: 2rem;
-    }
-    h1 {
-      font-size: 2.5rem;
-    }
+    body { padding: 2rem; }
+    h1 { font-size: 2.5rem; }
   }
 </style>
