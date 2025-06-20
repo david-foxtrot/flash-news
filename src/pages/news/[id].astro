@@ -1,0 +1,104 @@
+---
+import { type GetStaticPaths } from 'astro';
+
+export const getStaticPaths = (async () => {
+  const allNewsImports = import.meta.glob('/src/content/news/*.json');
+  const newsPromises = Object.values(allNewsImports).map(importer => importer());
+  const allNewsObjects = await Promise.all(newsPromises);
+  const allNews = allNewsObjects.map(item => item.default || item);
+
+  return allNews.map(newsItem => ({
+    params: { id: newsItem.id },
+    props: { news: newsItem }
+  }));
+}) satisfies GetStaticPaths;
+
+const { news } = Astro.props;
+
+const pageUrl = Astro.url.href;
+const shareText = `${news.keyword}: ${news.sentence1}`;
+const encodedUrl = encodeURIComponent(pageUrl);
+const encodedText = encodeURIComponent(shareText);
+
+const twitterShareUrl = `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`;
+const whatsappShareUrl = `https://api.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`;
+const telegramShareUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`;
+const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+
+// SOLUCIÓN FINAL: Creamos una variable "limpia" para el título
+const pageTitle = `${news.keyword}: ${news.sentence1}`.substring(0, 70);
+---
+
+<html lang="es">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+	<title>{pageTitle}</title>
+</head>
+<body>
+	<main>
+		<div class="single-news-container">
+			<div class="card-header">
+				<div class="header-main-content">
+					<span class="flags">{news.flags}</span>
+					<span class="keyword">{news.keyword}</span>
+				</div>
+				<a href={news.source_url} target="_blank" rel="noopener noreferrer nofollow" class="source-link">
+					Fuente
+					<svg class="external-link-icon" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+				</a>
+			</div>
+			<p class="sentence-large">{news.sentence1}</p>
+			<p class="sentence-large">{news.sentence2}</p>
+      <div class="share-section">
+        <div class="share-buttons">
+            <a href={twitterShareUrl} target="_blank" rel="noopener noreferrer nofollow" title="Compartir en X">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><g><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></g></svg>
+            </a>
+            <a href={whatsappShareUrl} data-action="share/whatsapp/share" target="_blank" rel="noopener noreferrer nofollow" title="Compartir en WhatsApp">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><g><path d="M12.04 2C6.58 2 2.13 6.45 2.13 12.01c0 1.77.46 3.48 1.32 4.95L2.05 22l5.25-1.38c1.41.79 3.05 1.21 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.92 0-5.46-4.45-9.91-9.91-9.91zM17.46 16c-.23.27-.85.78-1.48 1.08-.63.3-1.21.36-1.92.24-.71-.12-1.64-.54-2.73-1.55-1.09-1.01-1.8-2.22-2.07-2.82-.27-.6-.03-1.11.23-1.48.22-.31.46-.51.63-.69.17-.18.34-.37.48-.56.14-.19.24-.4.12-.64s-.48-.96-.64-1.28c-.16-.32-.34-.54-.51-.59-.17-.05-.38-.06-.55-.06s-.46.06-.68.33c-.22.27-.85.83-.85 2.01 0 1.18.87 2.33 1 2.5.13.17 1.63 2.58 3.96 3.53.58.24 1.05.38 1.42.48.37.1.72.08 1.03-.05.31-.13 1.42-.72 1.62-1.42.2-.7.2-1.28.14-1.48-.06-.2-.23-.31-.48-.42z"></path></g></svg>
+            </a>
+            <a href={telegramShareUrl} target="_blank" rel="noopener noreferrer nofollow" title="Compartir en Telegram">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><g><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.63 7.87-2.25 10.25c-.21.95-1.25.95-1.46 0l-1.93-6.93-6.93-1.93c-.95-.21-.95-1.25 0-1.46l10.25-2.25c.95-.21 1.25.09 1.05 1.05z"></path></g></svg>
+            </a>
+            <a href={facebookShareUrl} target="_blank" rel="noopener noreferrer nofollow" title="Compartir en Facebook">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><g><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm3.16 6.25h-1.82c-.33 0-.61.27-.61.61v1.36h2.43l-.31 2.43h-2.12v6.29h-2.5V12.65H9.35v-2.43h1.81V8.53c0-1.29 1.05-2.34 2.34-2.34h1.66v2.06z"></path></g></svg>
+            </a>
+        </div>
+      </div>
+		</div>
+    <a href="/" class="back-link">← Volver al feed principal</a>
+	</main>
+</body>
+</html>
+<style>
+body { background-color: #121212; color: #E0E0E0; font-family: 'Roboto', sans-serif; margin: 0; padding: 1rem; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+main { max-width: 720px; width: 100%;}
+.single-news-container { background-color: #1E1E1E; border-radius: 8px; padding: 2rem; border: 1px solid #2d2d2d; display: flex; flex-direction: column; }
+.sentence-large { font-size: 1.2rem; margin: 1rem 0; line-height: 1.7; flex-grow: 1; }
+.back-link { display: block; text-align: center; margin-top: 2rem; color: #BB86FC; text-decoration: none; }
+.back-link:hover { text-decoration: underline; }
+.card-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.header-main-content { display: flex; align-items: center; gap: 0.75rem; }
+.flags { font-size: 2rem; }
+.keyword { font-size: 1rem; font-weight: 700; color: #BB86FC; background-color: rgba(187, 134, 252, 0.1); padding: 0.3rem 0.6rem; border-radius: 4px; }
+.source-link { font-size: 0.9rem; color: #888; text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap; }
+.source-link:hover { text-decoration: underline; color: #aaa; }
+.external-link-icon { stroke: #888; width: 14px; height: 14px; }
+.share-section {
+    border-top: 1px solid #2d2d2d; padding-top: 1rem; margin-top: 1.5rem;
+    display: flex; justify-content: flex-end; align-items: center;
+}
+.share-buttons { display: flex; gap: 0.75rem; }
+.share-buttons a { display: flex; justify-content: center; align-items: center; width: 32px; height: 32px; text-decoration: none; transition: transform 0.2s ease; }
+.share-buttons svg { width: 20px; height: 20px; fill: #888; transition: fill 0.2s ease; }
+.share-buttons a:hover svg { fill: #fff; }
+.share-buttons a:hover { transform: scale(1.15); }
+@media (min-width: 768px) {
+  .single-news-container { padding: 2.5rem; }
+  .sentence-large { font-size: 1.4rem; }
+}
+</style>
