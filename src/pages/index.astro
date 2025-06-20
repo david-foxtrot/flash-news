@@ -1,10 +1,24 @@
 ---
 // --- Code Fence (JavaScript) ---
-import newsData from '../../news.json';
+
+// 1. Usamos Astro.glob() para importar el contenido de TODOS los archivos .json
+// que están dentro de nuestra carpeta de noticias.
+const allNews = await Astro.glob('../../content/news/*.json');
+
+// 2. Astro.glob no devuelve los archivos ordenados, así que los ordenamos nosotros.
+// El 'id' de cada noticia (que es la fecha y hora) es perfecto para ordenar.
+// b.id.localeCompare(a.id) los ordena del más nuevo al más viejo.
+const sortedNews = allNews.sort((a, b) => b.id.localeCompare(a.id));
+
+// 3. (Opcional) Si en el futuro tienes miles de noticias y quieres que la página
+// principal solo muestre las 100 más recientes, simplemente harías esto:
+// const latestNews = sortedNews.slice(0, 100);
+// Y en el HTML usarías 'latestNews' en lugar de 'sortedNews'.
 ---
 <html lang="es">
 <head>
-  <meta charset="UTF-8" /> <meta name="viewport" content="width=device-width" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
@@ -14,7 +28,7 @@ import newsData from '../../news.json';
   <main>
     <h1>Flash News Feed</h1>
     <div class="feed-container">
-      {newsData.map(news => (
+      {sortedNews.map(news => (
         <a href={news.source_url} target="_blank" rel="noopener noreferrer" class="news-card">
           <div class="card-header">
             <span class="flags">{news.flags}</span>
@@ -30,7 +44,7 @@ import newsData from '../../news.json';
 </html>
 
 <style>
-  /* ... (Todos los estilos que ya teníamos se quedan igual) ... */
+  /* Todos tus estilos se quedan exactamente igual */
   body {
     background-color: #121212;
     color: #E0E0E0;
