@@ -1,27 +1,18 @@
 ---
 // --- Code Fence (JavaScript) ---
 
-// 1. Usamos el método moderno 'import.meta.glob' para encontrar todos los archivos.
-// Esta es la forma recomendada y más robusta en Astro.
-const newsImports = import.meta.glob('../../content/news/*.json');
+// 1. Usamos el método moderno y robusto 'import.meta.glob'.
+// La ruta '/src/...' es absoluta desde la raíz del proyecto y es la forma correcta.
+const newsImports = import.meta.glob('/src/content/news/*.json');
 
-// 2. 'import.meta.glob' devuelve un objeto de funciones que debemos ejecutar
-// para obtener el contenido real de cada archivo. Usamos Promise.all para hacerlo.
+// 2. Ejecutamos todas las funciones de importación para obtener el contenido.
 const newsPromises = Object.values(newsImports).map(importer => importer());
 const allNewsObjects = await Promise.all(newsPromises);
 
-// 3. El contenido real de cada JSON está en la propiedad 'default' de lo que importamos.
-// Creamos una lista limpia con solo el contenido que nos interesa.
+// 3. Normalizamos los datos (el contenido real suele estar en la propiedad 'default').
 const allNews = allNewsObjects.map(item => item.default || item);
 
-// --- PASO DE DEPURACIÓN (Opcional, puedes borrarlo después) ---
-console.log(`[DEBUG] Archivos de noticias procesados: ${allNews.length}`);
-if (allNews.length > 0) {
-  console.log('[DEBUG] Estructura de la primera noticia:', JSON.stringify(allNews[0]));
-}
-// -------------------------------------------------------------
-
-// 4. Ordenamos las noticias del más nuevo al más viejo usando su 'id'.
+// 4. Ordenamos las noticias del más nuevo al más viejo usando su 'id' (timestamp).
 const sortedNews = allNews.sort((a, b) => {
   if (a.id && b.id) {
     return b.id.localeCompare(a.id);
@@ -42,17 +33,25 @@ const sortedNews = allNews.sort((a, b) => {
   <main>
     <h1>Flash News Feed</h1>
     <div class="feed-container">
-      {sortedNews.map(news => (
-        <a href={news.source_url} target="_blank" rel="noopener noreferrer" class="news-card">
-          <div class="card-header">
-            <span class="flags">{news.flags}</span>
-            <span class="keyword">{news.keyword}</span>
-          </div>
-          <p class="sentence">{news.sentence1}</p>
-          <p class="sentence">{news.sentence2}</p>
-        </a >
-      ))}
-    </div>
+  {sortedNews.map(news => (
+    // CAMBIO: La tarjeta ya no es una etiqueta <a>, es un <article>
+    <article class="news-card">
+      <div class="card-header">
+        <span class="flags">{news.flags}</span>
+        <span class="keyword">{news.keyword}</span>
+      </div>
+      <p class="sentence">{news.sentence1}</p>
+      <p class="sentence">{news.sentence2}</p>
+      
+      <div class="card-footer">
+        <a href={news.source_url} target="_blank" rel="noopener noreferrer" class="source-link">
+          Fuente 
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+        </a>
+      </div>
+    </article>
+  ))}
+</div>
   </main>
 </body>
 </html>
@@ -86,4 +85,24 @@ const sortedNews = allNews.sort((a, b) => {
     body { padding: 2rem; }
     h1 { font-size: 2.5rem; }
   }
+  
+  /* Pega esto al final de tus estilos en index.astro */
+.card-footer {
+  margin-top: 1rem;
+  text-align: right; /* Alinea el enlace a la derecha */
+}
+
+.source-link {
+  font-size: 0.8rem;
+  color: #888; /* Un color gris para que no destaque tanto */
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.source-link:hover {
+  text-decoration: underline;
+  color: #aaa;
+}
 </style>
